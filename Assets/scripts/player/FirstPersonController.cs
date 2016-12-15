@@ -1,78 +1,204 @@
 ﻿using UnityEngine;
 using System.Collections;
-
+/// <summary>
+/// this class handles all the player's movement controls and behavior
+/// </summary>
 public class FirstPersonController : MonoBehaviour
 {
-
+    /// <summary>
+    /// the controller
+    /// </summary>
     CharacterController player;
+    /// <summary>
+    /// the camera
+    /// </summary>
     public Transform cam;
-
+    /// <summary>
+    /// how fast the player moves
+    /// </summary>
     public float speed = 1;
+    /// <summary>
+    /// the mouse's x speed
+    /// </summary>
     public float mouseSensitivityX = 1;
+    /// <summary>
+    /// the mouse's y speed
+    /// </summary>
     public float mouseSensitivityY = 1;
 
+    /// <summary>
+    /// the joystick x speed
+    /// </summary>
     public float joySensitivityX = 3;
+    /// <summary>
+    /// the joystick y speed
+    /// </summary>
     public float joySensitivityY = 3;
+    /// <summary>
+    /// whether or not to invert the y axis
+    /// </summary>
     public bool invertLookY = true;
 
-
+    /// <summary>
+    /// how fast the player moves while sliding
+    /// </summary>
     public float slideBoost = 1.1f;
+    /// <summary>
+    /// how long to slide for
+    /// </summary>
     public float slideTimer = .5f;
+    /// <summary>
+    /// tracking if the player is sliding
+    /// </summary>
     public float slideTimerLife = 0;
+    /// <summary>
+    /// how much to squash the player by when sliding (crouching)
+    /// </summary>
     public float slideScale = .5f;
+    /// <summary>
+    /// if the player is sliding
+    /// </summary>
     public bool isSliding = false;
 
+    /// <summary>
+    /// how strong the player's wall jump is
+    /// </summary>
     public float doubleJumpImpulse = 5;
+    /// <summary>
+    /// this timer gives the player some leeway when trying to walljump so it's not frame perfect
+    /// </summary>
     public float doubleJumpTimer = .5f;
+    /// <summary>
+    /// tracking if the player is trying to double jump
+    /// </summary>
     public float doubleJumpTimerLife = 0;
+    /// <summary>
+    /// slows down horizontal movement if you've walljumped so it doesn't fling you around
+    /// </summary>
     public float doubleJumpPenalty = .5f;
 
+    /////CLIMB FUNCTION CURRENTLY BUGGED
+    /// <summary>
+    /// if the player can climb
+    /// </summary>
     public bool canClimb = false;
+    /// <summary>
+    /// if the player is climbing
+    /// </summary>
     public bool isClimbing = false;
+    /// <summary>
+    /// how long the climbing animation takes
+    /// </summary>
     public float climbTimer = 1;
+    /// <summary>
+    /// tracking if the player is currently climbing
+    /// </summary>
     public float climbTimerLife = 0;
+    /// <summary>
+    /// the vertical height the player is trying to climb to
+    /// </summary>
     public float climbTarget = 0;
 
+    /// <summary>
+    /// if the player is swimming
+    /// </summary>
     public bool isSwimming = false;
+    /// <summary>
+    /// slow down movement underwater
+    /// </summary>
     public float swimPenalty = .8f;
+    /// <summary>
+    /// this lets the player kind of float out of the water slightly and also
+    /// prevents repeated splooshing at the surface
+    /// </summary>
     public float wasSwimmingTimer = .5f;
+    /// <summary>
+    /// track if the player was recently swimming
+    /// </summary>
     public float wasSwimmingTimerLife = 0;
 
+    /// <summary>
+    /// if the player was grounded last frame...
+    /// </summary>
     public bool wasGrounded = false;
+    /// <summary>
+    /// how strong gravity is
+    /// </summary>
     public float gravity = -20;
+    /// <summary>
+    /// how strong the player's jump is
+    /// </summary>
     public float jumpImpulse = 10;
+    /// <summary>
+    /// if the player is sliding, how much to increase the jump impulse by
+    /// </summary>
     public float jumpBoost = 3;
+    /// <summary>
+    /// whether or not the player can get a boosted jump
+    /// needs refactoring
+    /// </summary>
     public bool canBoost = false;
 
+    /// <summary>
+    /// the audio clips for the different animations
+    /// run, landing, jump, splash slide
+    /// </summary>
     public AudioClip run;
     public AudioClip landing;
     public AudioClip jump;
     public AudioClip splash;
     public AudioClip slide;
 
+    /// <summary>
+    /// audio source for basic sound effects
+    /// </summary>
     AudioSource effects;
+    /// <summary>
+    /// audio source for the music
+    /// </summary>
     AudioSource music;
+    /// <summary>
+    /// audio source for landing effect
+    /// </summary>
     AudioSource landingSource;
+    /// <summary>
+    /// audio source for sliding sound effect
+    /// </summary>
     AudioSource slideSource;
-
+    /// <summary>
+    /// the current direction the player is jumping
+    /// used when wall jumping
+    /// </summary>
     Vector3 jumpDirection = Vector3.zero;
-
+    /// <summary>
+    /// if the player is currently contacting a wall
+    /// </summary>
     public bool touchingWall = false;
 
+    /// <summary>
+    /// the camera's pitch
+    /// </summary>
     float camPitch = 0;
+    /// <summary>
+    /// the player's velocity
+    /// </summary>
     Vector3 velocity = Vector3.zero;
-
+    /// <summary>
+    /// where the mouse was last frame
+    /// </summary>
     Vector3 prevMousePosition = Vector3.zero;
 
     void Start()
-    {
+    {// this gets all the audiosources attached to the player as a pseudo array
         var aSources = GetComponents<AudioSource>();
         player = GetComponent<CharacterController>();
 
+        //assigns each of the audio sources to one of the attached sources
         effects = aSources[0];
         landingSource = aSources[1];
         landingSource.clip = landing;
 
+        //sets the parameters of the audio sources
         slideSource = aSources[2];
         slideSource.clip = slide;
         slideSource.pitch = .6f;
@@ -98,12 +224,15 @@ public class FirstPersonController : MonoBehaviour
 
         //   print(touchingWall);
     }
-
+    /// <summary>
+    /// control's the camera's rotation via mouse or joystick
+    /// </summary>
     void cameraRotation()
     {
         Vector3 mouseDiff = Input.mousePosition - prevMousePosition;
         prevMousePosition = Input.mousePosition;
 
+        //if the mouse has moved since the last frame
         if (mouseDiff != new Vector3(0, 0, 0))
         {
             transform.Rotate(0, mouseDiff.x * mouseSensitivityX, 0);
@@ -111,28 +240,33 @@ public class FirstPersonController : MonoBehaviour
             camPitch = Mathf.Clamp(camPitch, -80, 80);
             cam.localEulerAngles = new Vector3(camPitch, 0, 0);
         }
-        else {
+        else
+        {
+            //otherwise use joystick controls
 
             //camera rotates vertically
-            camPitch+= (Input.GetAxis("Joy Y")) * joySensitivityY;
+            camPitch += (Input.GetAxis("Joy Y")) * joySensitivityY;
             camPitch = Mathf.Clamp(camPitch, -80, 80);
-            
-            cam.localEulerAngles = new Vector3(camPitch,0, 0);
+
+            cam.localEulerAngles = new Vector3(camPitch, 0, 0);
 
             //PLAYER rotates horizontally
             transform.Rotate(0, ((Input.GetAxis("Joy X")) * joySensitivityX), 0);
 
-            
+
 
             //cam.transform.Rotate(cam.eulerAngles.x, cam.eulerAngles.y +(Input.GetAxis("Joy X") * joySensitivityX), 0);
-           // cam.transform.Rotate(cam.eulerAngles.x + (Input.GetAxis("Joy X") * joySensitivityX) ,0 ,0);
+            // cam.transform.Rotate(cam.eulerAngles.x + (Input.GetAxis("Joy X") * joySensitivityX) ,0 ,0);
         }
     }
 
 
 
 
-
+    /// <summary>
+    /// handles all the player's movement commands
+////////NEEDS HEAVY REFACTORING
+    /// </summary>
     void PlayerMovement()
     {
 
@@ -147,25 +281,25 @@ public class FirstPersonController : MonoBehaviour
             //if the player is on the ground and slide is pressed
             if (player.isGrounded & Input.GetButton("Slide"))
             {
-              /*  slideTimerLife = slideTimer;
-                isSliding = true;
+                /*  slideTimerLife = slideTimer;
+                  isSliding = true;
 
-                //on the first frame slide is pressed, start the timer and shrink the player a little
-                //to simulate crouching
-                if (Input.GetButtonDown("Slide"))
-                {
-                    transform.localScale = new Vector3(1, slideScale, 1);
+                  //on the first frame slide is pressed, start the timer and shrink the player a little
+                  //to simulate crouching
+                  if (Input.GetButtonDown("Slide"))
+                  {
+                      transform.localScale = new Vector3(1, slideScale, 1);
 
-                    doubleJumpTimerLife = slideTimer;
+                      doubleJumpTimerLife = slideTimer;
 
 
-                   // if (!slideSource.isPlaying)
-                        slideSource.Play();
-                }
-                move = velocity; //figure out how fast the player is currently going
-                                 //move = transform.forward + transform.right;
-                                 //print("isSliding");
-                                 */
+                     // if (!slideSource.isPlaying)
+                          slideSource.Play();
+                  }
+                  move = velocity; //figure out how fast the player is currently going
+                                   //move = transform.forward + transform.right;
+                                   //print("isSliding");
+                                   */
             }
             else
             {
@@ -178,11 +312,11 @@ public class FirstPersonController : MonoBehaviour
                     /////
                     //this prevents the player from being able to scale the wall with walljumps
                     //////
-                    if (doubleJumpTimerLife > 0)  move += velocity * .9f;
+                    if (doubleJumpTimerLife > 0) move += velocity * .9f;
                 }
             }
 
-           //   print(player.isGrounded);
+            //   print(player.isGrounded);
 
 
             if (player.isGrounded)
@@ -202,7 +336,7 @@ public class FirstPersonController : MonoBehaviour
                     effects.Play();
                     if (canBoost)
                     {
-                       // print("boosting");
+                        // print("boosting");
                         velocity.y = jumpImpulse * jumpBoost;
                     }
                     else
@@ -257,12 +391,13 @@ public class FirstPersonController : MonoBehaviour
                         touchingWall = false;
                     }//if the player presses jump while sliding
                     else if (Input.GetButtonDown("Jump") & isSliding)
-                        {//can perform normal jump
-                            effects.clip = jump;
-                            effects.Play();
-                            velocity.y = jumpImpulse;
-                            wasGrounded = false;
-                        }else
+                    {//can perform normal jump
+                        effects.clip = jump;
+                        effects.Play();
+                        velocity.y = jumpImpulse;
+                        wasGrounded = false;
+                    }
+                    else
                     {
                         /*
                         if (canClimb)
@@ -304,7 +439,7 @@ public class FirstPersonController : MonoBehaviour
             else player.Move(velocity * Time.deltaTime);
 
         }
-
+        /////climbing function currently bugged
         /*
         if (climbTimerLife > 0)
         {
@@ -350,7 +485,7 @@ public class FirstPersonController : MonoBehaviour
         {
             slideTimerLife -= Time.deltaTime;
         }
-        else if(isSliding &slideTimerLife <= .1 & slideTimerLife > 0)
+        else if (isSliding & slideTimerLife <= .1 & slideTimerLife > 0)
         {
             transform.localScale = new Vector3(1, 1, 1);
             isSliding = false;
@@ -381,12 +516,13 @@ public class FirstPersonController : MonoBehaviour
             //   print("Swimming off");
             wasSwimmingTimerLife = 0;
             isSwimming = false;
-        } else if(wasSwimmingTimerLife == 0 && player.transform.position.y >1)
+        }
+        else if (wasSwimmingTimerLife == 0 && player.transform.position.y > 1)
         {
             isSwimming = false;
         }
 
-     //  print(player.isGrounded);
+        //  print(player.isGrounded);
 
         //after everything else, set was grounded, to is grounded
 
@@ -394,13 +530,16 @@ public class FirstPersonController : MonoBehaviour
 
 
     }
-
+    /// <summary>
+    /// what happens when the player collides with triggers (buttons or the water)
+    /// </summary>
+    /// <param name="collider">the player</param>
     void OnTriggerEnter(Collider collider)
     {
         if (collider.tag == "Water" & !isSliding)
         {
             //print("water");
-            if (!isSwimming & velocity.y < 0 ) player.Move(Vector3.down * 1);
+            if (!isSwimming & velocity.y < 0) player.Move(Vector3.down * 1);
 
 
             // AudioSource.PlayClipAtPoint(splash, player.transform.position);
@@ -410,7 +549,10 @@ public class FirstPersonController : MonoBehaviour
             wasSwimmingTimerLife = 0;
         }
     }
-
+    /// <summary>
+    /// when the player leaves the water
+    /// </summary>
+    /// <param name="collider">the player</param>
     void OnTriggerExit(Collider collider)
     {
         if (collider.tag == "Water")
@@ -439,26 +581,32 @@ public class FirstPersonController : MonoBehaviour
 
     */
 
+
+    /// <summary>
+    /// when the player collides with solid terrain, walls, floor, etc
+    /// handles all of that stuff
+    /// </summary>
+    /// <param name="collision">the player</param>
     void OnControllerColliderHit(ControllerColliderHit collision)
     {
-       if(collision.normal != Vector3.up & collision.normal !=Vector3.down) touchingWall = true;
+        if (collision.normal != Vector3.up & collision.normal != Vector3.down) touchingWall = true;
         jumpDirection = collision.normal;
-       if(!player.isGrounded | slideTimerLife>0) doubleJumpTimerLife = doubleJumpTimer;
+        if (!player.isGrounded | slideTimerLife > 0) doubleJumpTimerLife = doubleJumpTimer;
 
         // print("hitting something");
 
         if (collision.collider.tag == "Wall" & player.isGrounded != wasGrounded & !isSliding)
         {
             //landingSource.clip = landing;
-            
+
             if (velocity.y > -1) landingSource.volume = .1f;
             else if (velocity.y >= -10) landingSource.volume = .5f;
             else if (velocity.y < -10) landingSource.volume = 1;
-           // print("volume" + landingSource.volume);
+            // print("volume" + landingSource.volume);
             // print(velocity.y);
-            if(!landingSource.isPlaying) landingSource.Play();
-            
-     
+            if (!landingSource.isPlaying) landingSource.Play();
+
+
             //   effects.volume = 1;
 
             // print("landing");
@@ -488,12 +636,8 @@ public class FirstPersonController : MonoBehaviour
               // print("testing");
               canClimb = true;
               climbTarget += 2f; //playerheight
-          }
-          */
-
-
-
-
+          }          
+         */
     }
 }
 

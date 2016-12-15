@@ -1,8 +1,11 @@
 ﻿using UnityEngine;
 using System.Collections;
-
+/// <summary>
+/// this class contains any global variables needed
+/// </summary>
 public class GlobalVariables : MonoBehaviour {
-
-    //how low all the platforms start
+    /// <summary>
+    /// how low all the platforms start
+    /// </summary>
     public static float startHeight = -50;
 }

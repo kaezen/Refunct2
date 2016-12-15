@@ -1,11 +1,17 @@
 ﻿using UnityEngine;
 using System.Collections;
-
+/// <summary>
+/// this class contains the function that makes the wall rise
+/// triggered by the player stepping on a button
+/// </summary>
 public class WallUp : MonoBehaviour {
-
-    //we use this to know if the plaform needs to go up
+    /// <summary>
+    /// if the platform needs to or is going up
+    /// </summary>
     bool goingUp = false;
-    //the speed at which the platform rises
+    /// <summary>
+    /// the speed at which the platform rises
+    /// </summary>
     public float upSpeed = 17;
 
 

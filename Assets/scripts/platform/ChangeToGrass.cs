@@ -1,13 +1,23 @@
 ﻿using UnityEngine;
 using System.Collections;
-
+/// <summary>
+/// this class changes the terrain to green when the player steps on it
+/// </summary>
 public class ChangeToGrass : MonoBehaviour
 {
 
-    // Use this for initialization
+    /// <summary>
+    /// the grass material
+    /// </summary>
     public Material grass;
+    /// <summary>
+    /// where the player is
+    /// </summary>
     Transform player;
-
+    /// <summary>
+    /// when the player steps on this platform, turn it green
+    /// </summary>
+    /// <param name="collision">the player</param>
     void OnControllerColliderHit(ControllerColliderHit collision)
     {
 
@@ -21,9 +31,5 @@ public class ChangeToGrass : MonoBehaviour
                 //then turn the texture to grass
                 collision.gameObject.GetComponent<MeshRenderer>().material = grass;
         }
-
     }
-
-
-
 }
